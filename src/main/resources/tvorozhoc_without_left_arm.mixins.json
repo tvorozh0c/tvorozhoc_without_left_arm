@@ -1,0 +1,16 @@
+{
+	"required": true,
+	"package": "com.tvorozhoc.leftarm.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"ClientPacketListenerMixin",
+		"ItemInHandRendererMixin",
+		"LevelEventHandlerMixin",
+		"ParticleEngineMixin",
+		"SoundEngineMixin",
+		"TotemParticleMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

@@ -1,0 +1,22 @@
+{
+	"schemaVersion": 1,
+	"id": "tvorozhoc_without_left_arm",
+	"version": "${version}",
+	"name": "tvorozhoc without a left arm",
+	"description": "Настройка положения, размера и прозрачности щита и тотема в левой руке. Отключение анимации и звука тотема.",
+	"authors": ["tvorozhock"],
+	"license": "CC0-1.0",
+	"icon": "assets/tvorozhoc_without_left_arm/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["com.tvorozhoc.leftarm.LeftArmClient"],
+		"modmenu": ["com.tvorozhoc.leftarm.ModMenuIntegration"]
+	},
+	"mixins": ["tvorozhoc_without_left_arm.mixins.json"],
+	"depends": {
+		"fabricloader": ">=0.17.0",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
