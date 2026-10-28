@@ -21,5 +21,6 @@
 	"tvorozhoc_without_left_arm.custom": "custom color",
 	"tvorozhoc_without_left_arm.custom_sound": "custom",
 	"tvorozhoc_without_left_arm.vanilla": "vanilla",
-	"tvorozhoc_without_left_arm.color_hint": "Color as #RRGGBB"
+	"tvorozhoc_without_left_arm.color_hint": "Color as #RRGGBB. Click the square to open the palette",
+	"tvorozhoc_without_left_arm.second_color": "Second totem color: %s"
 }

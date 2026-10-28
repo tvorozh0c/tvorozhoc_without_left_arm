@@ -21,5 +21,6 @@
 	"tvorozhoc_without_left_arm.custom": "свой цвет",
 	"tvorozhoc_without_left_arm.custom_sound": "свой",
 	"tvorozhoc_without_left_arm.vanilla": "стандарт",
-	"tvorozhoc_without_left_arm.color_hint": "Цвет в формате #RRGGBB"
+	"tvorozhoc_without_left_arm.color_hint": "Цвет #RRGGBB. Нажми на квадрат справа, чтобы открыть палитру",
+	"tvorozhoc_without_left_arm.second_color": "Второй цвет тотема: %s"
 }

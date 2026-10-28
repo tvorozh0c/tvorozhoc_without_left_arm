@@ -16,7 +16,8 @@ public final class ParticleColors {
 	public static void applyTotem(Particle particle) {
 		LeftArmConfig config = LeftArmConfig.get();
 		if (config.totemParticlesCustom) {
-			apply(particle, LeftArmConfig.parseColor(config.totemParticlesColor));
+			boolean second = config.totemSecondColor && ThreadLocalRandom.current().nextBoolean();
+			apply(particle, LeftArmConfig.parseColor(second ? config.totemParticlesColor2 : config.totemParticlesColor));
 		}
 	}
 

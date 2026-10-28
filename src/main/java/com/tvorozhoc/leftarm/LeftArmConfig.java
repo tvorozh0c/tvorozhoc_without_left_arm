@@ -47,6 +47,9 @@ public class LeftArmConfig {
 	// Вкладка «Остальное»
 	public boolean totemParticlesCustom = false;
 	public String totemParticlesColor = "#FF69B4";
+	/** Второй цвет частиц тотема: половина частиц одного цвета, половина другого. */
+	public boolean totemSecondColor = false;
+	public String totemParticlesColor2 = "#00BFFF";
 	public boolean maceParticlesCustom = false;
 	public String maceParticlesColor = "#FF69B4";
 	public boolean maceCustomSound = false;

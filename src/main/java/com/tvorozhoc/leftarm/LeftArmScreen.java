@@ -1,5 +1,6 @@
 package com.tvorozhoc.leftarm;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSliderButton;
@@ -7,6 +8,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -40,6 +42,8 @@ public class LeftArmScreen extends Screen {
 	/** Поля ввода цвета — рядом с каждым рисуем квадрат с этим цветом. */
 	private final List<EditBox> swatches = new ArrayList<>();
 	private boolean draggingItem;
+	/** Открытая палитра (по клику на квадрат с цветом) или null. */
+	private @Nullable ColorPicker picker;
 
 	public LeftArmScreen(@Nullable Screen parent) {
 		super(Component.translatable("tvorozhoc_without_left_arm.title"));
@@ -72,6 +76,7 @@ public class LeftArmScreen extends Screen {
 		sliders.clear();
 
 		swatches.clear();
+		picker = null;
 
 		// Вкладки сверху
 		addTab(Tab.SHIELD, "shield", width / 2 - 154);
@@ -127,17 +132,22 @@ public class LeftArmScreen extends Screen {
 			b.setMessage(customLabel("totem_particles", config.totemParticlesCustom, "custom"));
 		}).bounds(x, y, PANEL_WIDTH, 20).build());
 		addColorBox(x, y += 22, config.totemParticlesColor, v -> config.totemParticlesColor = v);
+		addRenderableWidget(Button.builder(toggleLabel("second_color", config.totemSecondColor), b -> {
+			config.totemSecondColor = !config.totemSecondColor;
+			b.setMessage(toggleLabel("second_color", config.totemSecondColor));
+		}).bounds(x, y += 22, PANEL_WIDTH, 20).build());
+		addColorBox(x, y += 22, config.totemParticlesColor2, v -> config.totemParticlesColor2 = v);
 
 		addRenderableWidget(Button.builder(customLabel("mace_particles", config.maceParticlesCustom, "custom"), b -> {
 			config.maceParticlesCustom = !config.maceParticlesCustom;
 			b.setMessage(customLabel("mace_particles", config.maceParticlesCustom, "custom"));
-		}).bounds(x, y += 28, PANEL_WIDTH, 20).build());
+		}).bounds(x, y += 26, PANEL_WIDTH, 20).build());
 		addColorBox(x, y += 22, config.maceParticlesColor, v -> config.maceParticlesColor = v);
 
 		addRenderableWidget(Button.builder(customLabel("mace_sound", config.maceCustomSound, "custom_sound"), b -> {
 			config.maceCustomSound = !config.maceCustomSound;
 			b.setMessage(customLabel("mace_sound", config.maceCustomSound, "custom_sound"));
-		}).bounds(x, y += 28, PANEL_WIDTH, 20).build());
+		}).bounds(x, y += 26, PANEL_WIDTH, 20).build());
 
 		addRenderableWidget(Button.builder(toggleLabel("ears", config.pinkEars), b -> {
 			config.pinkEars = !config.pinkEars;
@@ -145,7 +155,21 @@ public class LeftArmScreen extends Screen {
 		}).bounds(x, y += 24, PANEL_WIDTH, 20).build());
 
 		addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose())
-				.bounds(x, y + 30, PANEL_WIDTH, 20).build());
+				.bounds(x, y + 28, PANEL_WIDTH, 20).build());
+	}
+
+	/** Квадрат с цветом справа от поля ввода; клик по нему открывает палитру. */
+	private static boolean isOverSwatch(EditBox box, double mouseX, double mouseY) {
+		int sx = box.getX() + box.getWidth() + 4;
+		return mouseX >= sx && mouseX < sx + 22 && mouseY >= box.getY() && mouseY < box.getY() + 18;
+	}
+
+	private void openPicker(EditBox box) {
+		int color = LeftArmConfig.parseColor(box.getValue());
+		int px = panelX() - 6 - ColorPicker.WIDTH - 6;
+		int py = Mth.clamp(box.getY() - ColorPicker.HEIGHT / 2, 34, height - ColorPicker.HEIGHT - 4);
+		// setValue вызывает responder поля, а он уже сохраняет цвет в конфиг
+		picker = new ColorPicker(px, py, color >= 0 ? color : 0xFFFFFF, rgb -> box.setValue(String.format("#%06X", rgb)));
 	}
 
 	private void addColorBox(int x, int y, String value, Consumer<String> setter) {
@@ -187,6 +211,19 @@ public class LeftArmScreen extends Screen {
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		if (picker != null) {
+			// Клик мимо палитры закрывает её
+			if (!picker.mouseClicked(event.x(), event.y())) {
+				picker = null;
+			}
+			return true;
+		}
+		for (EditBox box : swatches) {
+			if (isOverSwatch(box, event.x(), event.y())) {
+				openPicker(box);
+				return true;
+			}
+		}
 		if (super.mouseClicked(event, doubleClick)) {
 			return true;
 		}
@@ -196,6 +233,10 @@ public class LeftArmScreen extends Screen {
 
 	@Override
 	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		if (picker != null && picker.isDragging()) {
+			picker.mouseDragged(event.x(), event.y());
+			return true;
+		}
 		if (draggingItem) {
 			LeftArmConfig.ItemSettings s = current();
 			s.x = Mth.clamp(s.x + (float) dx * DRAG_SPEED, -1.5f, 1.5f);
@@ -209,6 +250,9 @@ public class LeftArmScreen extends Screen {
 	@Override
 	public boolean mouseReleased(MouseButtonEvent event) {
 		draggingItem = false;
+		if (picker != null) {
+			picker.mouseReleased();
+		}
 		return super.mouseReleased(event);
 	}
 
@@ -223,6 +267,15 @@ public class LeftArmScreen extends Screen {
 		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
 	}
 
+	@Override
+	public boolean keyPressed(KeyEvent event) {
+		if (picker != null && event.key() == InputConstants.KEY_ESCAPE) {
+			picker = null;
+			return true;
+		}
+		return super.keyPressed(event);
+	}
+
 	// ---- Отрисовка ----
 
 	@Override
@@ -233,12 +286,17 @@ public class LeftArmScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-		super.render(graphics, mouseX, mouseY, delta);
+		// Пока открыта палитра, кнопки под ней не подсвечиваются
+		super.render(graphics, picker != null ? -1 : mouseX, picker != null ? -1 : mouseY, delta);
 		for (EditBox box : swatches) {
 			int color = LeftArmConfig.parseColor(box.getValue());
 			int sx = box.getX() + box.getWidth() + 4;
 			graphics.fill(sx, box.getY(), sx + 22, box.getY() + 18, 0xFFFFFFFF);
 			graphics.fill(sx + 1, box.getY() + 1, sx + 21, box.getY() + 17, color >= 0 ? 0xFF000000 | color : 0xFF555555);
+		}
+		if (picker != null) {
+			graphics.nextStratum();
+			picker.render(graphics, font);
 		}
 		if (tab != Tab.OTHER) {
 			graphics.drawCenteredString(font, Component.translatable("tvorozhoc_without_left_arm.hint"),
